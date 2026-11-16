@@ -1,0 +1,35 @@
+// Prisma schema for PROJET PERMIS BÉNIN
+// Database: Neon (serverless PostgreSQL)
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Direct connection used by `prisma db push` / migrations.
+  // Neon exposes both pooled (pgbouncer, port 6543) and direct (port 5432) URLs.
+  // For schema pushes use the DIRECT_URL (direct, non-pooled) connection.
+  directUrl = env("DIRECT_URL")
+}
+
+model Inscription {
+  id        String   @id @default(cuid())
+  nom       String
+  prenom    String
+  telephone String
+  ville     String
+  categorie String
+  langue    String
+  message   String?
+  source    String? // "web" | "whatsapp" | "email"
+  status    String   @default("nouveau") // nouveau | traite | archive
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([categorie])
+  @@index([createdAt])
+}

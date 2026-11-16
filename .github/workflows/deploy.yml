@@ -1,0 +1,51 @@
+# Auto-deploy to Vercel on every push to main.
+#
+# Setup (one-time):
+#   1. vercel link            (creates .vercel/project.json — already gitignored)
+#   2. vercel project inspect (note ORG_ID and PROJECT_ID)
+#   3. In GitHub → Settings → Secrets and variables → Actions, add:
+#        VERCEL_TOKEN      — a Vercel access token (https://vercel.com/account/tokens)
+#        VERCEL_ORG_ID     — from `vercel project inspect`
+#        VERCEL_PROJECT_ID — from `vercel project inspect`
+#
+# After that, every push to `main` deploys to production automatically.
+
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel
+
+      - name: Pull Vercel env (production)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to production
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
